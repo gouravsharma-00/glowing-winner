@@ -17,7 +17,7 @@ const LOGIN = gql`
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>
 
 export default function Login() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState('bob@example.com')
   const [loginMutation] = useMutation(LOGIN)
   const setToken = useAuthStore((s) => s.login)
   const navigation = useNavigation<LoginScreenNavigationProp>()
