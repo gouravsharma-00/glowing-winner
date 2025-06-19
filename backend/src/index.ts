@@ -1,43 +1,46 @@
 import { createServer } from 'http'
+import { createYoga, createSchema } from 'graphql-yoga'
 import { Server as SocketIOServer } from 'socket.io'
 import { typeDefs, resolvers } from './schema'
 import { getUserIdFromAuthHeader } from './auth'
 import { prisma } from './context'
 import { setupSocket } from './socket'
-import { createYoga, createSchema } from 'graphql-yoga'
+import { Context } from './context'
 
 const PORT = 4000
 
-// Create HTTP server
-const httpServer = createServer()
-
-// Setup Socket.io
-const io = new SocketIOServer(httpServer, {
-  cors: { origin: '*' },
-})
-setupSocket(io)
-
-// Create GraphQL schema
-const schema = createSchema({
+const schema = createSchema<{
+  req: Request
+  prisma: typeof prisma
+  userId: string | null
+}>({
   typeDefs,
   resolvers,
 })
 
-// Create Yoga server
 const yoga = createYoga({
   schema,
-  context: ({ request }) => {
+  graphqlEndpoint: '/graphql',
+  context: ({ request }): Context => {
     const authHeader = request.headers.get('authorization') || undefined
     const userId = getUserIdFromAuthHeader(authHeader)
     return { prisma, userId }
   },
-  graphqlEndpoint: '/graphql',
+  // Disable Yoga's default response handling (fixes header conflict)
+  fetchAPI: { Response },
 })
 
-// Bind Yoga to HTTP server
-httpServer.on('request', yoga)
+const server = createServer((req, res) => {
+  // Let Yoga handle GraphQL requests
+  yoga(req, res)
+})
 
-// Start server
-httpServer.listen(PORT, () => {
+// Attach Socket.IO
+const io = new SocketIOServer(server, {
+  cors: { origin: '*' },
+})
+setupSocket(io)
+
+server.listen(PORT, () => {
   console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`)
 })

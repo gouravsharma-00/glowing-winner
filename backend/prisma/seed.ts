@@ -19,12 +19,12 @@ async function main() {
       {
         name: 'React Native Meetup',
         location: 'Bangalore',
-        startTime: new Date('2025-06-21T10:00:00Z'),
+        startTime: new Date('2025-06-22T00:00:00Z'),
       },
       {
         name: 'GraphQL Workshop',
         location: 'Mumbai',
-        startTime: new Date('2025-06-22T14:00:00Z'),
+        startTime: new Date('2025-06-22T00:00:00Z'),
       },
     ],
   })

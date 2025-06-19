@@ -1,6 +1,10 @@
 import React from 'react'
+import { useEffect } from 'react'
+import { io } from 'socket.io-client'
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, Button } from 'react-native'
 import { gql, useQuery, useMutation } from '@apollo/client'
+
+const socket = io('http://192.168.45.209:4000') // use your backend URL
 
 const GET_EVENTS = gql`
   query {
@@ -39,6 +43,17 @@ export default function EventList() {
   const { data: meData } = useQuery(ME_QUERY)
   const myId = meData?.me?.id
 
+    useEffect(() => {
+    socket.on('attendeeUpdate', ({ eventId }) => {
+      console.log('🔄 attendee updated for event:', eventId)
+      refetch()
+    })
+
+    return () => {
+      socket.off('attendeeUpdate')
+    }
+  }, [refetch])
+
   if (loading || !eventsData) return <ActivityIndicator size="large" style={styles.center} />
   if (error) return <Text style={styles.center}>Error: {error.message}</Text>
 
@@ -53,7 +68,7 @@ export default function EventList() {
           <View style={{ margin: 16, padding: 16, borderWidth: 1, borderColor: '#ccc', borderRadius: 8 }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{item.name}</Text>
             <Text>📍 {item.location}</Text>
-            <Text>🕒 {new Date(item.startTime).toLocaleString()}</Text>
+            <Text>🕒 {new Date(Number(item.startTime)).toLocaleString()}</Text>
             <Text style={{ marginTop: 8, fontWeight: 'bold' }}>Attendees:</Text>
             {item.attendees.length === 0 ? (
               <Text>No attendees yet</Text>

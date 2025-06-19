@@ -2,7 +2,11 @@ import { Server } from 'socket.io'
 
 const eventRooms = new Map<string, Set<string>>()
 
+let _io: Server | null = null
+
 export function setupSocket(io: Server) {
+  _io = io
+
   io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`)
 
@@ -22,4 +26,12 @@ export function setupSocket(io: Server) {
       console.log(`Client disconnected: ${socket.id}`)
     })
   })
+}
+
+export const emitAttendeeUpdate = (eventId: string) => {
+  if (_io) {
+    _io.emit('attendeeUpdate', { eventId })
+  } else {
+    console.warn('Socket.IO server not initialized yet')
+  }
 }

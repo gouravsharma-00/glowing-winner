@@ -1,6 +1,7 @@
 import { buildSchema } from 'graphql'
 import { Context } from './context'
 import jwt from 'jsonwebtoken'
+import { emitAttendeeUpdate } from './socket'
 
 export const typeDefs = buildSchema(`
   type User {
@@ -50,7 +51,7 @@ export const resolvers = {
     joinEvent: async (_: any, { eventId }: { eventId: string }, ctx: Context) => {
       if (!ctx.userId) throw new Error('Not authenticated')
 
-      return ctx.prisma.event.update({
+      const event = await ctx.prisma.event.update({
         where: { id: eventId },
         data: {
           attendees: {
@@ -59,6 +60,9 @@ export const resolvers = {
         },
         include: { attendees: true },
       })
+
+      emitAttendeeUpdate(eventId) // 👈 notify all clients
+      return event
     },
 
     login: async (_: any, { email }: { email: string }, ctx: Context) => {
